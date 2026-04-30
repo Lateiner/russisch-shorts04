@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Richtig oder Falsch: Всё verstehen</title>
+    <style>
+        :root {
+            --bg-color: #f7f9fc;
+            --card-bg: #ffffff;
+            --true-color: #27ae60;
+            --false-color: #e74c3c;
+            --primary-blue: #3498db;
+            --text-color: #2c3e50;
+        }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 15px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 650px;
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+        }
+
+        h1 { text-align: center; font-size: 1.5rem; color: var(--primary-blue); }
+        .progress { text-align: center; color: #95a5a6; margin-bottom: 20px; font-size: 0.9rem; }
+
+        .question-box {
+            background: #fdfdfd;
+            border: 2px solid #edf2f7;
+            padding: 25px;
+            border-radius: 12px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .statement {
+            font-size: 1.2rem;
+            font-weight: 500;
+            margin-bottom: 25px;
+            line-height: 1.4;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+
+        .choice-btn {
+            padding: 15px 40px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            color: white;
+            transition: transform 0.2s, opacity 0.2s;
+        }
+
+        .btn-true { background-color: var(--true-color); }
+        .btn-false { background-color: var(--false-color); }
+        .choice-btn:hover { transform: scale(1.05); }
+        .choice-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+        .feedback-area {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            font-weight: bold;
+            display: none;
+            text-align: center;
+        }
+
+        .nav-btn {
+            margin-top: 20px;
+            padding: 10px 25px;
+            background-color: var(--primary-blue);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            display: none;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .restart-btn {
+            display: block;
+            margin: 20px auto;
+            background-color: #95a5a6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        @media (max-width: 480px) {
+            .btn-group { flex-direction: column; }
+            .statement { font-size: 1.1rem; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Richtig oder Falsch?</h1>
+    <div class="progress" id="progress">Aussage 1 von 6</div>
+
+    <div class="question-box">
+        <div class="statement" id="statement">Lade Aussage...</div>
+        
+        <div class="btn-group">
+            <button class="choice-btn btn-true" id="btn-true" onclick="handleChoice(true)">Richtig</button>
+            <button class="choice-btn btn-false" id="btn-false" onclick="handleChoice(false)">Falsch</button>
+        </div>
+
+        <div class="feedback-area" id="feedback"></div>
+        <button class="nav-btn" id="next-btn" onclick="nextQuestion()">Nächste Frage</button>
+    </div>
+
+    <button class="restart-btn" onclick="resetQuiz()">Quiz neu starten</button>
+</div>
+
+<script>
+    const questions = [
+        {
+            text: "Man nutzt „всё“ in dieser Form, um ein Gespräch zu verlängern.",
+            isCorrect: false,
+            feedback: "Falsch! „Всё“ dient dazu, ein Gespräch sofort zu beenden."
+        },
+        {
+            text: "Das Wort „всё“ kann in Konfliktsituationen ein Synonym für „Stopp“ sein.",
+            isCorrect: true,
+            feedback: "Richtig! Es signalisiert dem Gegenüber, dass man nicht weiterreden will."
+        },
+        {
+            text: "Man kann „всё“ mit dem Wort „хватит“ (genug) kombinieren.",
+            isCorrect: true,
+            feedback: "Korrekt! „Всё, хватит“ ist eine sehr gebräuchliche Verstärkung."
+        },
+        {
+            text: "„Всё“ bedeutet in jedem Kontext immer nur „Schluss jetzt“.",
+            isCorrect: false,
+            feedback: "Falsch! Es kann auch „alles“ oder „alle“ bedeuten."
+        },
+        {
+            text: "Dieser Ausdruck wird eher in formellen Geschäftsbriefen verwendet.",
+            isCorrect: false,
+            feedback: "Falsch! Es handelt sich um eine typische Form der mündlichen Alltagssprache."
+        },
+        {
+            text: "Sagt man „Всё, я ухожу“, beendet man damit seine Teilnahme an der Situation.",
+            isCorrect: true,
+            feedback: "Richtig! Man macht deutlich, dass man das Gespräch und den Ort verlässt."
+        }
+    ];
+
+    let currentIdx = 0;
+
+    function displayQuestion() {
+        const q = questions[currentIdx];
+        document.getElementById('statement').innerText = q.text;
+        document.getElementById('progress').innerText = `Aussage ${currentIdx + 1} von ${questions.length}`;
+        document.getElementById('feedback').style.display = 'none';
+        document.getElementById('next-btn').style.display = 'none';
+        document.getElementById('btn-true').disabled = false;
+        document.getElementById('btn-false').disabled = false;
+    }
+
+    function handleChoice(userChoice) {
+        const q = questions[currentIdx];
+        const feedbackEl = document.getElementById('feedback');
+        const nextBtn = document.getElementById('next-btn');
+        
+        document.getElementById('btn-true').disabled = true;
+        document.getElementById('btn-false').disabled = true;
+
+        feedbackEl.style.display = 'block';
+        feedbackEl.innerText = q.feedback;
+
+        if (userChoice === q.isCorrect) {
+            feedbackEl.style.backgroundColor = '#eafaf1';
+            feedbackEl.style.color = 'var(--true-color)';
+        } else {
+            feedbackEl.style.backgroundColor = '#fdedec';
+            feedbackEl.style.color = 'var(--false-color)';
+        }
+
+        if (currentIdx < questions.length - 1) {
+            nextBtn.style.display = 'block';
+        } else {
+            feedbackEl.innerText += " — Quiz beendet!";
+        }
+    }
+
+    function nextQuestion() {
+        currentIdx++;
+        displayQuestion();
+    }
+
+    function resetQuiz() {
+        currentIdx = 0;
+        displayQuestion();
+    }
+
+    // Start
+    displayQuestion();
+</script>
+
+</body>
+</html>
