@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kategorisierung: Gesprächsverlauf</title>
+    <style>
+        :root {
+            --bg-color: #f0f4f8;
+            --text-color: #2d3436;
+            --pos-color: #00b894;
+            --stop-color: #d63031;
+            --card-bg: #ffffff;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+            text-align: center;
+        }
+
+        h1 { margin-bottom: 10px; font-size: 1.6rem; }
+        .intro { color: #636e72; margin-bottom: 30px; }
+
+        /* Bereich für den aktuellen Satz */
+        .question-area {
+            min-height: 120px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .sentence-card {
+            background: var(--card-bg);
+            padding: 20px 40px;
+            border-radius: 12px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+            font-size: 1.3rem;
+            font-weight: bold;
+            border: 2px solid #dfe6e9;
+            transition: transform 0.2s;
+        }
+
+        /* Die beiden Ziel-Zonen */
+        .zones {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .zone {
+            padding: 30px 20px;
+            border-radius: 15px;
+            border: 3px dashed #b2bec3;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .zone-pos { border-color: var(--pos-color); color: var(--pos-color); }
+        .zone-stop { border-color: var(--stop-color); color: var(--stop-color); }
+
+        .zone:hover { background: rgba(255,255,255,0.5); transform: translateY(-5px); }
+        
+        .zone h3 { margin: 0; font-size: 1.2rem; pointer-events: none; }
+        .zone p { font-size: 0.9rem; margin-top: 5px; pointer-events: none; }
+
+        /* Feedback & Controls */
+        .feedback {
+            min-height: 30px;
+            font-weight: bold;
+            font-size: 1.1rem;
+            margin-bottom: 20px;
+        }
+
+        .controls { display: flex; justify-content: center; gap: 10px; }
+        button {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            background: #636e72;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        @media (max-width: 600px) {
+            .zones { grid-template-columns: 1fr; }
+            .sentence-card { font-size: 1.1rem; padding: 15px 25px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Kategorisierung</h1>
+    <p class="intro">Klicke auf die passende Box, um den Satz einzuordnen.</p>
+
+    <div class="question-area" id="questionArea">
+        <!-- Hier erscheint der Satz -->
+    </div>
+
+    <div class="zones">
+        <div class="zone zone-pos" onclick="checkAnswer('pos')">
+            <h3>Fortführend</h3>
+            <p>(Gespräch geht weiter)</p>
+        </div>
+        <div class="zone zone-stop" onclick="checkAnswer('stop')">
+            <h3>Beendend</h3>
+            <p>(Stopp / Abbruch)</p>
+        </div>
+    </div>
+
+    <div class="feedback" id="feedback"></div>
+
+    <div class="controls">
+        <button onclick="initGame()">Neustart</button>
+    </div>
+</div>
+
+<script>
+    const data = [
+        { text: "Я слушаю.", type: "pos" },
+        { text: "Всё, я ухожу.", type: "stop" },
+        { text: "Интересно, расскажи ещё.", type: "pos" },
+        { text: "Хватит, я не хочу это обсуждать.", type: "stop" },
+        { text: "Хорошо, продолжай.", type: "pos" },
+        { text: "Всё, стоп!", type: "stop" },
+        { text: "Да, я согласен.", type: "pos" },
+        { text: "Мне всё равно, замолчи.", type: "stop" }
+    ];
+
+    let currentIndex = 0;
+    let shuffledData = [];
+
+    function initGame() {
+        currentIndex = 0;
+        shuffledData = [...data].sort(() => Math.random() - 0.5);
+        document.getElementById('feedback').innerText = "";
+        showNextSentence();
+    }
+
+    function showNextSentence() {
+        const area = document.getElementById('questionArea');
+        if (currentIndex < shuffledData.length) {
+            area.innerHTML = `<div class="sentence-card">${shuffledData[currentIndex].text}</div>`;
+        } else {
+            area.innerHTML = `<div class="sentence-card">Geschafft! Alle Sätze sortiert.</div>`;
+            document.getElementById('feedback').innerText = "Hervorragend!";
+            document.getElementById('feedback').style.color = "var(--pos-color)";
+        }
+    }
+
+    function checkAnswer(chosenType) {
+        if (currentIndex >= shuffledData.length) return;
+
+        const feedback = document.getElementById('feedback');
+        const correctType = shuffledData[currentIndex].type;
+
+        if (chosenType === correctType) {
+            feedback.innerText = "Richtig!";
+            feedback.style.color = "var(--pos-color)";
+            currentIndex++;
+            setTimeout(() => {
+                feedback.innerText = "";
+                showNextSentence();
+            }, 800);
+        } else {
+            feedback.innerText = "Nicht ganz richtig. Überlege nochmal!";
+            feedback.style.color = "var(--stop-color)";
+        }
+    }
+
+    initGame();
+</script>
+
+</body>
+</html>
