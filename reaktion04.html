@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Russisch Übung: Всё, хватит!</title>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --accent-color: #3498db;
+            --stop-color: #e74c3c;
+            --success-color: #27ae60;
+            --bg-color: #f0f2f5;
+        }
+
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 15px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        h1 { text-align: center; color: var(--primary-color); font-size: 1.4rem; }
+        
+        .instruction { 
+            background: #e1f5fe; 
+            padding: 10px; 
+            border-radius: 8px; 
+            font-size: 0.9rem; 
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: #fff;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            min-height: 120px;
+            transition: all 0.3s;
+        }
+
+        .situation {
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+            color: #444;
+            flex-grow: 1;
+        }
+
+        .drop-zone {
+            height: 50px;
+            border: 2px dashed #ccc;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #fafafa;
+        }
+
+        .drop-zone.drag-over { border-color: var(--accent-color); background: #e8f4fd; }
+        .card.correct { border-color: var(--success-color); background: #f0fff4; }
+        .card.wrong { border-color: var(--stop-color); background: #fff5f5; }
+
+        .pool {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            padding: 20px;
+            background: #f9f9f9;
+            border-radius: 10px;
+            min-height: 60px;
+            margin-bottom: 20px;
+        }
+
+        .bubble {
+            background: var(--primary-color);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: grab;
+            user-select: none;
+            font-weight: bold;
+            font-size: 1rem;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: opacity 0.2s;
+        }
+
+        .btn-solution { background: var(--accent-color); color: white; }
+        .btn-restart { background: #95a5a6; color: white; }
+        button:hover { opacity: 0.8; }
+
+        .feedback { text-align: center; margin-top: 15px; font-weight: bold; min-height: 20px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Wie reagierst du auf Russisch?</h1>
+    <p class="instruction">Ordne die Sprechblasen der passenden Situation zu. Beende Konflikte mit „Всё“!</p>
+
+    <div class="grid" id="grid">
+        <!-- Situationen -->
+        <div class="card" data-ans="stop">
+            <div class="situation">Dein Bruder provoziert dich beim Essen ununterbrochen.</div>
+            <div class="drop-zone" id="z1"></div>
+        </div>
+        <div class="card" data-ans="go">
+            <div class="situation">Eine Freundin fragt, ob du noch mehr Tee möchtest.</div>
+            <div class="drop-zone" id="z2"></div>
+        </div>
+        <div class="card" data-ans="stop">
+            <div class="situation">Ein Kollege will zum zehnten Mal über ein Thema diskutieren, das längst geklärt ist.</div>
+            <div class="drop-zone" id="z3"></div>
+        </div>
+        <div class="card" data-ans="go">
+            <div class="situation">Du triffst jemanden im Park und willst ein Gespräch beginnen.</div>
+            <div class="drop-zone" id="z4"></div>
+        </div>
+        <div class="card" data-ans="stop">
+            <div class="situation">Du merkst, dass ein Streit zu emotional wird und willst jetzt sofort aufhören.</div>
+            <div class="drop-zone" id="z5"></div>
+        </div>
+        <div class="card" data-ans="go">
+            <div class="situation">Jemand zeigt dir Fotos von seiner Katze und du findest sie süß.</div>
+            <div class="drop-zone" id="z6"></div>
+        </div>
+    </div>
+
+    <div class="pool" id="pool">
+        <div class="bubble" draggable="true" id="stop1" data-type="stop">Всё!</div>
+        <div class="bubble" draggable="true" id="go1" data-type="go">Да, спасибо.</div>
+        <div class="bubble" draggable="true" id="stop2" data-type="stop">Всё, хватит!</div>
+        <div class="bubble" draggable="true" id="go2" data-type="go">Привет!</div>
+        <div class="bubble" draggable="true" id="stop3" data-type="stop">Всё, я ухожу.</div>
+        <div class="bubble" draggable="true" id="go3" data-type="go">Как мило!</div>
+    </div>
+
+    <div class="controls">
+        <button class="btn-solution" onclick="showSolution()">Lösung</button>
+        <button class="btn-restart" onclick="resetGame()">Neustart</button>
+    </div>
+    <div class="feedback" id="feedback"></div>
+</div>
+
+<script>
+    const bubbles = document.querySelectorAll('.bubble');
+    const zones = document.querySelectorAll('.drop-zone');
+    const feedback = document.getElementById('feedback');
+
+    bubbles.forEach(b => {
+        b.addEventListener('dragstart', e => e.dataTransfer.setData('text', b.id));
+    });
+
+    zones.forEach(z => {
+        z.addEventListener('dragover', e => {
+            e.preventDefault();
+            z.classList.add('drag-over');
+        });
+
+        z.addEventListener('dragleave', () => z.classList.remove('drag-over'));
+
+        z.addEventListener('drop', e => {
+            e.preventDefault();
+            z.classList.remove('drag-over');
+            const id = e.dataTransfer.getData('text');
+            const el = document.getElementById(id);
+            
+            if (z.children.length === 0) {
+                z.appendChild(el);
+                checkCorrection(z.parentElement, el);
+            }
+        });
+    });
+
+    function checkCorrection(card, bubble) {
+        if (card.dataset.ans === bubble.dataset.type) {
+            card.classList.add('correct');
+            card.classList.remove('wrong');
+        } else {
+            card.classList.add('wrong');
+            card.classList.remove('correct');
+        }
+    }
+
+    function showSolution() {
+        resetGame();
+        const cards = document.querySelectorAll('.card');
+        const stopBubbles = Array.from(document.querySelectorAll('[data-type="stop"]'));
+        const goBubbles = Array.from(document.querySelectorAll('[data-type="go"]'));
+
+        cards.forEach(card => {
+            const targetZone = card.querySelector('.drop-zone');
+            if (card.dataset.ans === 'stop') {
+                targetZone.appendChild(stopBubbles.pop());
+            } else {
+                targetZone.appendChild(goBubbles.pop());
+            }
+            card.classList.add('correct');
+        });
+        feedback.innerText = "Lösung wurde angezeigt.";
+    }
+
+    function resetGame() {
+        const pool = document.getElementById('pool');
+        document.querySelectorAll('.bubble').forEach(b => pool.appendChild(b));
+        document.querySelectorAll('.card').forEach(c => {
+            c.classList.remove('correct', 'wrong');
+        });
+        feedback.innerText = "";
+    }
+</script>
+
+</body>
+</html>
