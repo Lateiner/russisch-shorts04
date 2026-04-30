@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lückentext: Всё im Kontext</title>
+    <style>
+        :root {
+            --bg-color: #f4f7f9;
+            --card-bg: #ffffff;
+            --primary-blue: #007bff;
+            --success-green: #28a745;
+            --error-red: #dc3545;
+            --text-color: #333;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 800px;
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+        }
+
+        h1 { text-align: center; font-size: 1.5rem; margin-bottom: 10px; }
+        .intro { text-align: center; color: #666; margin-bottom: 30px; }
+
+        .exercise-block {
+            margin-bottom: 25px;
+            padding: 20px;
+            border-radius: 10px;
+            background: #fafafa;
+            border: 1px solid #eee;
+        }
+
+        .sentence {
+            font-size: 1.1rem;
+            line-height: 1.6;
+            margin-bottom: 10px;
+        }
+
+        /* Dropdown Styling */
+        select {
+            padding: 5px 10px;
+            font-size: 1rem;
+            border: 2px solid #ccc;
+            border-radius: 5px;
+            background-color: white;
+            cursor: pointer;
+            margin: 0 5px;
+            outline: none;
+        }
+
+        select:focus { border-color: var(--primary-blue); }
+
+        /* Feedback-Farben */
+        .correct-select { border-color: var(--success-green) !important; background-color: #eafaf1; }
+        .wrong-select { border-color: var(--error-red) !important; background-color: #fdedec; }
+
+        .feedback-msg {
+            font-weight: bold;
+            font-size: 0.9rem;
+            margin-top: 10px;
+            min-height: 1.2rem;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            margin-top: 30px;
+        }
+
+        .btn-restart {
+            padding: 12px 25px;
+            background: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        @media (max-width: 600px) {
+            .sentence { font-size: 1rem; }
+            select { margin-top: 10px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Vervollständige die Sätze</h1>
+    <p class="intro">Wähle das passende Wort aus dem Menü aus, um die Sätze sinnvoll zu beenden.</p>
+
+    <div id="quiz-area"></div>
+
+    <div class="controls">
+        <button class="btn-restart" onclick="initQuiz()">Übung zurücksetzen</button>
+    </div>
+</div>
+
+<script>
+    const data = [
+        {
+            text_before: "Я не хочу больше спорить. Всё,",
+            text_after: "я ухожу.",
+            options: ["еще", "всё", "хорошо"],
+            correct: "всё",
+            explanation: "Richtig! Das Doppel-Всё verstärkt den Abbruch."
+        },
+        {
+            text_before: "Официант, принесите счёт,",
+            text_after: "пожалуйста.",
+            options: ["хорошо", "всё", "еще"],
+            correct: "всё",
+            explanation: "Korrekt. Damit signalisierst du, dass du nichts weiter bestellen willst."
+        },
+        {
+            text_before: "Ты меня обидел. Хватит,",
+            text_after: "молчи!",
+            options: ["всё", "привет", "еще"],
+            correct: "всё",
+            explanation: "Richtig! Всё beendet hier die unangenehme Situation."
+        },
+        {
+            text_before: "Как дела? У меня",
+            text_after: "нормально.",
+            options: ["всё", "еще", "стоп"],
+            correct: "всё",
+            explanation: "Korrekt. In diesem Fall bedeutet es 'alles'."
+        },
+        {
+            text_before: "Перестань кричать!",
+            text_after: "хватит!",
+            options: ["Хорошо", "Еще", "Всё"],
+            correct: "Всё",
+            explanation: "Richtig! Ein kräftiger Abschluss des Streits."
+        },
+        {
+            text_before: "Мы купили хлеб,",
+            text_after: "что нам нужно.",
+            options: ["еще", "всё", "хорошо"],
+            correct: "всё",
+            explanation: "Richtig. Hier wird die Vollständigkeit betont."
+        }
+    ];
+
+    function initQuiz() {
+        const area = document.getElementById('quiz-area');
+        area.innerHTML = '';
+        
+        data.forEach((item, idx) => {
+            const block = document.createElement('div');
+            block.className = 'exercise-block';
+            
+            // Zufällige Sortierung der Optionen
+            const shuffledOptions = [...item.options].sort(() => Math.random() - 0.5);
+            
+            block.innerHTML = `
+                <div class="sentence">
+                    ${item.text_before}
+                    <select id="sel-${idx}" onchange="checkAnswer(${idx})">
+                        <option value="" disabled selected>...</option>
+                        ${shuffledOptions.map(opt => `<option value="${opt}">${opt}</option>`).join('')}
+                    </select>
+                    ${item.text_after}
+                </div>
+                <div class="feedback-msg" id="fb-${idx}"></div>
+            `;
+            area.appendChild(block);
+        });
+    }
+
+    function checkAnswer(idx) {
+        const selectEl = document.getElementById(`sel-${idx}`);
+        const feedbackEl = document.getElementById(`fb-${idx}`);
+        const selectedValue = selectEl.value;
+        const correctAnswer = data[idx].correct;
+
+        // Entferne alte Klassen
+        selectEl.classList.remove('correct-select', 'wrong-select');
+
+        if (selectedValue === correctAnswer) {
+            selectEl.classList.add('correct-select');
+            feedbackEl.innerText = data[idx].explanation;
+            feedbackEl.style.color = "var(--success-green)";
+        } else {
+            selectEl.classList.add('wrong-select');
+            feedbackEl.innerText = "Nicht ganz. Versuche es noch einmal!";
+            feedbackEl.style.color = "var(--error-red)";
+        }
+    }
+
+    initQuiz();
+</script>
+
+</body>
+</html>
