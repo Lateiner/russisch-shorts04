@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hotspot: Stoppsignale finden</title>
+    <style>
+        :root {
+            --bg-color: #f5f6fa;
+            --accent-color: #0097e6;
+            --success-color: #4cd137;
+            --error-color: #e84118;
+            --text-color: #2f3640;
+        }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 15px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 700px;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        h1 { font-size: 1.4rem; margin-bottom: 10px; }
+        .instruction { color: #7f8c8d; margin-bottom: 30px; }
+
+        .word-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .word-tile {
+            background: #fff;
+            border: 2px solid #dcdde1;
+            padding: 20px 10px;
+            border-radius: 12px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            user-select: none;
+        }
+
+        .word-tile:hover {
+            border-color: var(--accent-color);
+            transform: translateY(-2px);
+        }
+
+        /* Zustände */
+        .tile-correct {
+            background-color: var(--success-color) !important;
+            border-color: var(--success-color) !important;
+            color: white;
+        }
+
+        .tile-wrong {
+            background-color: var(--error-color) !important;
+            border-color: var(--error-color) !important;
+            color: white;
+        }
+
+        .feedback-area {
+            min-height: 24px;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        button {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .btn-solution { background: var(--accent-color); color: white; }
+        .btn-restart { background: #718093; color: white; }
+
+        @media (max-width: 480px) {
+            .word-grid { grid-template-columns: 1fr 1fr; }
+            .word-tile { font-size: 1rem; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Finde die Stoppsignale</h1>
+    <p class="instruction">Klicke alle russischen Wörter an, mit denen man ein Gespräch oder eine Aktion sofort abbrechen kann.</p>
+
+    <div class="word-grid" id="wordGrid"></div>
+
+    <div class="feedback-area" id="feedback"></div>
+
+    <div class="controls">
+        <button class="btn-solution" onclick="showSolution()">Lösung</button>
+        <button class="btn-restart" onclick="initGame()">Neustart</button>
+    </div>
+</div>
+
+<script>
+    const words = [
+        { text: "всё", isStop: true },
+        { text: "привет", isStop: false },
+        { text: "хватит", isStop: true },
+        { text: "пожалуйста", isStop: false },
+        { text: "стоп", isStop: true },
+        { text: "ещё", isStop: false },
+        { text: "остановись", isStop: true },
+        { text: "хорошо", isStop: false },
+        { text: "перестань", isStop: true },
+        { text: "да", isStop: false },
+        { text: "замолчи", isStop: true },
+        { text: "спасибо", isStop: false }
+    ];
+
+    let foundCount = 0;
+    const totalStops = words.filter(w => w.isStop).length;
+
+    function initGame() {
+        const grid = document.getElementById('wordGrid');
+        const feedback = document.getElementById('feedback');
+        grid.innerHTML = '';
+        feedback.innerText = '';
+        foundCount = 0;
+
+        // Mischen der Wörter
+        const shuffledWords = [...words].sort(() => Math.random() - 0.5);
+
+        shuffledWords.forEach(word => {
+            const tile = document.createElement('div');
+            tile.className = 'word-tile';
+            tile.innerText = word.text;
+            tile.onclick = () => handleTileClick(tile, word);
+            grid.appendChild(tile);
+        });
+    }
+
+    function handleTileClick(tile, word) {
+        if (tile.classList.contains('tile-correct') || tile.classList.contains('tile-wrong')) return;
+
+        if (word.isStop) {
+            tile.classList.add('tile-correct');
+            foundCount++;
+            checkWin();
+        } else {
+            tile.classList.add('tile-wrong');
+            document.getElementById('feedback').innerText = "Das ist kein Stoppsignal!";
+            document.getElementById('feedback').style.color = "var(--error-color)";
+            setTimeout(() => {
+                if (document.getElementById('feedback').style.color === "var(--error-color)") {
+                    document.getElementById('feedback').innerText = "";
+                }
+            }, 2000);
+        }
+    }
+
+    function checkWin() {
+        const feedback = document.getElementById('feedback');
+        if (foundCount === totalStops) {
+            feedback.innerText = "Super! Du hast alle " + totalStops + " Stoppsignale gefunden.";
+            feedback.style.color = "var(--success-color)";
+        } else {
+            feedback.innerText = "Gefunden: " + foundCount + " von " + totalStops;
+            feedback.style.color = "var(--accent-color)";
+        }
+    }
+
+    function showSolution() {
+        const tiles = document.querySelectorAll('.word-tile');
+        tiles.forEach(tile => {
+            const wordObj = words.find(w => w.text === tile.innerText);
+            if (wordObj.isStop) {
+                tile.classList.add('tile-correct');
+                tile.classList.remove('tile-wrong');
+            } else {
+                tile.classList.remove('tile-correct', 'tile-wrong');
+            }
+        });
+        document.getElementById('feedback').innerText = "Alle Stoppsignale wurden markiert.";
+        document.getElementById('feedback').style.color = "var(--accent-color)";
+    }
+
+    initGame();
+</script>
+
+</body>
+</html>
