@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multiple Choice: Bedeutung von всё</title>
+    <style>
+        :root {
+            --primary-bg: #f8f9fa;
+            --accent-blue: #007bff;
+            --correct-green: #28a745;
+            --wrong-red: #dc3545;
+            --text-color: #333;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--primary-bg);
+            margin: 0;
+            padding: 10px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .quiz-container {
+            width: 100%;
+            max-width: 700px;
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+        }
+
+        h1 { font-size: 1.4rem; color: var(--text-color); text-align: center; }
+        .intro { text-align: center; color: #666; margin-bottom: 25px; font-size: 0.95rem; }
+
+        .question-card {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #eee;
+            border-radius: 12px;
+            background: #fff;
+        }
+
+        .dialog-box {
+            background: #f1f3f5;
+            padding: 15px;
+            border-left: 5px solid var(--accent-blue);
+            margin-bottom: 15px;
+            border-radius: 4px;
+            line-height: 1.5;
+        }
+
+        .options {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 10px;
+        }
+
+        .option-btn {
+            padding: 12px 15px;
+            border: 2px solid #e9ecef;
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            text-align: left;
+            font-size: 1rem;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .option-btn:disabled { cursor: default; }
+
+        /* Status-Farben */
+        .option-btn.correct {
+            background-color: var(--correct-green) !important;
+            color: white !important;
+            border-color: var(--correct-green) !important;
+        }
+
+        .option-btn.wrong {
+            background-color: var(--wrong-red) !important;
+            color: white !important;
+            border-color: var(--wrong-red) !important;
+        }
+
+        .feedback-label {
+            margin-top: 10px;
+            font-weight: bold;
+            font-size: 0.9rem;
+            min-height: 1.2rem;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+
+        button.btn-restart {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            color: white;
+            background: #6c757d;
+        }
+
+        @media (min-width: 600px) {
+            .options { grid-template-columns: 1fr 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="quiz-container">
+    <h1>Was bedeutet „всё“ hier?</h1>
+    <p class="intro">Wähle die richtige Bedeutung direkt im Dialog aus. Du erhältst sofort eine Rückmeldung.</p>
+
+    <div id="quiz-area"></div>
+
+    <div class="controls">
+        <button class="btn-restart" onclick="initQuiz()">Übung zurücksetzen</button>
+    </div>
+</div>
+
+<script>
+    const questions = [
+        {
+            dialog: "— Ты купил молоко, хлеб и сыр?<br>— Да, я купил <b>всё</b>.",
+            options: ["Schluss jetzt", "Alles", "Nichts", "Fertig"],
+            correct: 1,
+            feedback: "Richtig! Hier bezieht sich alles auf die Einkaufsliste."
+        },
+        {
+            dialog: "— Хватит спорить! Я не хочу больше это слушать! <b>Всё</b>, я ухожу!",
+            options: ["Alles", "Immer", "Schluss jetzt", "Vielleicht"],
+            correct: 2,
+            feedback: "Genau! Das Wort beendet hier die Diskussion."
+        },
+        {
+            dialog: "— Официант, это <b>всё</b>, что мы заказывали?",
+            options: ["Alles", "Genug", "Stopp", "Überall"],
+            correct: 0,
+            feedback: "Richtig. Es wird gefragt, ob die Bestellung vollständig ist."
+        },
+        {
+            dialog: "— Ты опять начинаешь этот разговор?<br>— <b>Всё</b>, замолчи!",
+            options: ["Alle", "Immer noch", "Alles", "Schluss / Stopp"],
+            correct: 3,
+            feedback: "Richtig! Ein klares Signal, das Gespräch abzubrechen."
+        },
+        {
+            dialog: "— Как прошёл экзамен?<br>— <b>Всё</b> хорошо!",
+            options: ["Schluss", "Alles", "Ende", "Sehr"],
+            correct: 1,
+            feedback: "Richtig. Alles ist gut verlaufen."
+        },
+        {
+            dialog: "— Вы будете ещё что-то заказывать?<br>— Нет, спасибо, это <b>всё</b>.",
+            options: ["Schluss jetzt", "Alles / Das ist alles", "Nichts", "Genug"],
+            correct: 1,
+            feedback: "Korrekt. Damit signalisiert man im Restaurant, dass man fertig ist."
+        }
+    ];
+
+    function initQuiz() {
+        const area = document.getElementById('quiz-area');
+        area.innerHTML = '';
+        
+        questions.forEach((q, qIdx) => {
+            const card = document.createElement('div');
+            card.className = 'question-card';
+            card.innerHTML = `
+                <div class="dialog-box">${q.dialog}</div>
+                <div class="options" id="opts-${qIdx}">
+                    ${q.options.map((opt, oIdx) => `
+                        <button class="option-btn" onclick="handleSelection(${qIdx}, ${oIdx})">${opt}</button>
+                    `).join('')}
+                </div>
+                <div class="feedback-label" id="fb-${qIdx}"></div>
+            `;
+            area.appendChild(card);
+        });
+    }
+
+    function handleSelection(qIdx, oIdx) {
+        const q = questions[qIdx];
+        const buttons = document.getElementById(`opts-${qIdx}`).querySelectorAll('.option-btn');
+        const feedbackEl = document.getElementById(`fb-${qIdx}`);
+
+        // Deaktiviere alle Buttons dieser Frage nach der Wahl
+        buttons.forEach((btn, index) => {
+            btn.disabled = true;
+            if (index === q.correct) {
+                btn.classList.add('correct');
+            } else if (index === oIdx) {
+                btn.classList.add('wrong');
+            }
+        });
+
+        // Sofortiges Text-Feedback
+        if (oIdx === q.correct) {
+            feedbackEl.innerText = "Korrekt! " + q.feedback;
+            feedbackEl.style.color = "var(--correct-green)";
+        } else {
+            feedbackEl.innerText = "Leider falsch. Die richtige Antwort ist markiert.";
+            feedbackEl.style.color = "var(--wrong-red)";
+        }
+    }
+
+    initQuiz();
+</script>
+
+</body>
+</html>
