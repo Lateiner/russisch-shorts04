@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audio-Quiz: Emotionen erkennen</title>
+    <style>
+        :root {
+            --bg-color: #f8f9fa;
+            --card-bg: #ffffff;
+            --accent-blue: #007bff;
+            --success-green: #28a745;
+            --error-red: #dc3545;
+            --text-main: #333;
+        }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 15px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            max-width: 600px;
+            width: 100%;
+            background: var(--card-bg);
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .progress { color: #666; font-size: 0.9rem; margin-bottom: 10px; }
+        
+        h1 { font-size: 1.3rem; margin-bottom: 20px; color: var(--text-main); }
+
+        .audio-box {
+            background: #e9ecef;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .audio-box:hover { border-color: var(--accent-blue); background: #dee2e6; }
+
+        .image-options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .option-card {
+            border: 3px solid #eee;
+            border-radius: 12px;
+            padding: 15px;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: #fff;
+        }
+
+        .option-card .emoji { font-size: 3.5rem; display: block; margin-bottom: 10px; }
+        .option-card .label { font-weight: bold; font-size: 0.9rem; }
+
+        /* Zustände */
+        .card-correct { border-color: var(--success-green); background: #d4edda; }
+        .card-wrong { border-color: var(--error-red); background: #f8d7da; }
+        .disabled { pointer-events: none; opacity: 0.7; }
+
+        .feedback-area {
+            min-height: 50px;
+            margin: 15px 0;
+            font-weight: bold;
+            line-height: 1.4;
+        }
+
+        .nav-buttons { display: flex; gap: 10px; justify-content: center; }
+
+        button {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            color: white;
+        }
+
+        .btn-next { background: var(--accent-blue); }
+        .btn-restart { background: #6c757d; }
+
+        @media (max-width: 400px) {
+            .image-options { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="progress" id="progress">Aufgabe 1 von 6</div>
+    <h1>Hörverstehen: Всё</h1>
+
+    <div class="audio-box" onclick="playCurrentAudio()">
+        <span style="font-size: 2rem;">🔊</span><br>
+        <strong>Satz anhören</strong>
+    </div>
+
+    <div class="feedback-area" id="feedback"></div>
+
+    <div class="image-options" id="options-grid">
+        <div class="option-card" id="opt-conflict" onclick="handleChoice('conflict')">
+            <span class="emoji">🙅‍♂️</span>
+            <span class="label">Abbruch / Genug!</span>
+        </div>
+        <div class="option-card" id="opt-neutral" onclick="handleChoice('neutral')">
+            <span class="emoji">✅</span>
+            <span class="label">Normal / Fertig</span>
+        </div>
+    </div>
+
+    <div class="nav-buttons">
+        <button class="btn-next" id="next-btn" onclick="nextQuestion()" style="display:none;">Nächste Aufgabe</button>
+        <button class="btn-restart" id="restart-btn" onclick="resetQuiz()" style="display:none;">Neustart</button>
+    </div>
+</div>
+
+<script>
+    const questions = [
+        { text: "Всё, хватит!", type: "conflict", feedback: "Richtig! Das ist ein energischer Abbruch eines Streits." },
+        { text: "Да, это всё.", type: "neutral", feedback: "Korrekt. Das sagt man z.B. sachlich im Supermarkt." },
+        { text: "Всё, я больше не хочу это слушать!", type: "conflict", feedback: "Genau. Hier signalisiert 'Всё' das Ende der Geduld." },
+        { text: "Всё хорошо.", type: "neutral", feedback: "Richtig. Eine ganz normale, positive Feststellung." },
+        { text: "Всё, замолчи!", type: "conflict", feedback: "Korrekt. Ein sehr deutliches Stopp-Signal." },
+        { text: "Я купил всё.", type: "neutral", feedback: "Richtig. Eine rein sachliche Information über eine Menge." }
+    ];
+
+    let currentIdx = 0;
+    let audioPlayed = false;
+
+    function playCurrentAudio() {
+        const utterance = new SpeechSynthesisUtterance(questions[currentIdx].text);
+        utterance.lang = 'ru-RU';
+        // Bei Konflikt-Sätzen sprechen wir etwas tiefer/bestimmter
+        if (questions[currentIdx].type === 'conflict') {
+            utterance.rate = 0.85;
+            utterance.pitch = 0.8;
+        } else {
+            utterance.rate = 0.95;
+            utterance.pitch = 1.0;
+        }
+        window.speechSynthesis.speak(utterance);
+        audioPlayed = true;
+        if (document.getElementById('feedback').innerText === "") {
+            document.getElementById('feedback').innerText = "In welcher Situation befinden wir uns?";
+        }
+    }
+
+    function handleChoice(choice) {
+        if (!audioPlayed) {
+            alert("Höre dir zuerst das Audio an!");
+            return;
+        }
+
+        const q = questions[currentIdx];
+        const feedbackEl = document.getElementById('feedback');
+        const nextBtn = document.getElementById('next-btn');
+        const conflictCard = document.getElementById('opt-conflict');
+        const neutralCard = document.getElementById('opt-neutral');
+
+        document.getElementById('options-grid').classList.add('disabled');
+
+        if (choice === q.type) {
+            document.getElementById('opt-' + choice).classList.add('card-correct');
+            feedbackEl.innerText = q.feedback;
+            feedbackEl.style.color = "var(--success-green)";
+        } else {
+            document.getElementById('opt-' + choice).classList.add('card-wrong');
+            feedbackEl.innerText = "Nicht ganz. Achte auf den Tonfall und den Kontext.";
+            feedbackEl.style.color = "var(--error-red)";
+        }
+
+        if (currentIdx < questions.length - 1) {
+            nextBtn.style.display = "block";
+        } else {
+            document.getElementById('restart-btn').style.display = "block";
+            feedbackEl.innerText += " - Glückwunsch, du hast alle Aufgaben geschafft!";
+        }
+    }
+
+    function nextQuestion() {
+        currentIdx++;
+        audioPlayed = false;
+        document.getElementById('progress').innerText = `Aufgabe ${currentIdx + 1} von 6`;
+        document.getElementById('feedback').innerText = "";
+        document.getElementById('next-btn').style.display = "none";
+        document.getElementById('options-grid').classList.remove('disabled');
+        document.querySelectorAll('.option-card').forEach(c => c.classList.remove('card-correct', 'card-wrong'));
+    }
+
+    function resetQuiz() {
+        currentIdx = 0;
+        document.getElementById('restart-btn').style.display = "none";
+        nextQuestion();
+        document.getElementById('progress').innerText = `Aufgabe 1 von 6`;
+    }
+</script>
+
+</body>
+</html>
