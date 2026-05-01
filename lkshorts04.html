@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lernkartei: Russische Vokabeln</title>
+    <style>
+        :root {
+            --primary-green: #2ecc71;
+            --dark-green: #27ae60;
+            --light-green: #e8f5e9;
+            --bg-color: #f1f8f4;
+            --text-color: #2c3e50;
+            --shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .app-container {
+            width: 90%;
+            max-width: 600px;
+            text-align: center;
+            padding: 20px;
+        }
+
+        h1 {
+            color: var(--dark-green);
+            margin-bottom: 10px;
+            font-size: 1.8rem;
+        }
+
+        .progress {
+            margin-bottom: 20px;
+            font-weight: bold;
+            color: var(--dark-green);
+            background: white;
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            box-shadow: var(--shadow);
+        }
+
+        /* 3D Flip Card Styles */
+        .card-container {
+            perspective: 1000px;
+            width: 100%;
+            height: 300px;
+            margin: 0 auto 30px auto;
+            cursor: pointer;
+        }
+
+        .card {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+            box-shadow: var(--shadow);
+            border-radius: 15px;
+        }
+
+        .card.is-flipped {
+            transform: rotateY(180deg);
+        }
+
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 30px;
+            border-radius: 15px;
+            background: white;
+            border: 2px solid var(--primary-green);
+        }
+
+        .card-back {
+            transform: rotateY(180deg);
+            background-color: var(--light-green);
+        }
+
+        .text-content {
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            max-width: 100%;
+            line-height: 1.4;
+        }
+
+        /* Controls */
+        .controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .nav-buttons, .action-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            grid-column: span 2;
+        }
+
+        button {
+            padding: 12px 20px;
+            font-size: 1rem;
+            font-weight: bold;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            background-color: var(--primary-green);
+            color: white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        button:hover {
+            background-color: var(--dark-green);
+            transform: translateY(-2px);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .btn-secondary {
+            background-color: var(--text-color);
+        }
+
+        .btn-secondary:hover {
+            background-color: #1a252f;
+        }
+
+        @media (max-width: 480px) {
+            .card-container { height: 250px; }
+            h1 { font-size: 1.4rem; }
+            button { padding: 10px 15px; font-size: 0.9rem; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <h1>Vokabel-Lernkartei</h1>
+    <div class="progress" id="progress">0 / 0</div>
+
+    <div class="card-container" id="cardTrigger">
+        <div class="card" id="cardElement">
+            <div class="card-face card-front">
+                <div class="text-content" id="frontText">Lädt...</div>
+            </div>
+            <div class="card-face card-back">
+                <div class="text-content" id="backText">...</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="controls">
+        <div class="nav-buttons">
+            <button id="prevBtn">← Vorherige</button>
+            <button id="nextBtn">Nächste →</button>
+        </div>
+        <div class="action-buttons">
+            <button class="btn-secondary" id="homeBtn">An den Anfang</button>
+            <button class="btn-secondary" id="shuffleBtn">Mischen</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Rohdaten direkt aus deiner Liste
+    const rawData = `1. всё – alles; Schluss jetzt; das war’s
+2. хватить (SV) – reichen; genug sein
+3. хватит – es reicht; genug
+4. стоп – stopp
+5. останавливаться (NSV) / остановиться (SV) – anhalten; stehen bleiben
+6. остановись – bleib stehen; hör auf
+7. переставать (NSV) / перестать (SV) – aufhören
+8. перестань – hör auf
+9. молчать (NSV) / замолчать (SV) – schweigen; verstummen
+10. замолчи – schweig still; halt den Mund
+11. уходить (NSV) / уйти (SV) – weggehen; verlassen
+12. я ухожу – ich gehe (jetzt)
+13. покупать (NSV) / купить (SV) – kaufen
+14. молоко – Milch
+15. хлеб – Brot
+16. сыр – Käse
+17. официант – Kellner
+18. заказывать (NSV) / заказать (SV) – bestellen
+19. приносить (NSV) / принести (SV) – bringen
+20. счёт – Rechnung
+21. пожалуйста – bitte
+22. спасибо – danke
+23. слушать (NSV) / послушать (SV) – hören; zuhören
+24. слышать (NSV) / услышать (SV) – hören (Wahrnehmung)
+25. говорить (NSV) / сказать (SV) – sprechen; sagen
+26. разговаривать (NSV) – sich unterhalten; reden
+27. спорить (NSV) / поспорить (SV) – streiten; debattieren
+28. обсуждать (NSV) / обсудить (SV) – besprechen; diskutieren
+29. решать (NSV) / решить (SV) – entscheiden; lösen
+30. кричать (NSV) / крикнуть (SV) – schreien; rufen
+31. начинать (NSV) / начать (SV) – anfangen; beginnen
+32. продолжать (NSV) / продолжить (SV) – weitermachen; fortfahren
+33. заканчивать (NSV) / закончить (SV) – beenden; fertigstellen
+34. проходить (NSV) / пройти (SV) – vergehen; verlaufen (z. B. Prüfung)
+35. экзамен – Prüfung
+36. работа – Arbeit
+37. занят / занята – beschäftigt; besetzt
+38. опаздывать (NSV) / опоздать (SV) – sich verspäten
+39. оправдание – Ausrede; Rechtfertigung
+40. договариваться (NSV) / договориться (SV) – vereinbaren; abmachen
+41. обижать (NSV) / обидеть (SV) – beleidigen; kränken
+42. соглашаться (NSV) / согласиться (SV) – zustimmen; einverstanden sein
+43. хорошо – gut; einverstanden
+44. плохо – schlecht
+45. нормально – normal; in Ordnung
+46. интересно – interessant
+47. ещё – noch; noch mehr
+48. больше – mehr; (in Verneinung: nicht) mehr
+49. уже – schon
+50. опять – wieder; schon wieder`;
+
+    let cards = [];
+    let currentIndex = 0;
+
+    // Parser für die Liste
+    function parseData() {
+        const lines = rawData.split('\n');
+        cards = lines.map(line => {
+            // Trennung am " – " (Gedankenstrich)
+            const parts = line.split(' – ');
+            const front = parts[0] ? parts[0].trim() : "Fehler";
+            const back = parts[1] ? parts[1].trim() : "";
+            return { front, back };
+        });
+    }
+
+    // Karte aktualisieren
+    function updateCard() {
+        const cardElement = document.getElementById('cardElement');
+        const frontText = document.getElementById('frontText');
+        const backText = document.getElementById('backText');
+        const progress = document.getElementById('progress');
+
+        // Umdrehen zurücksetzen
+        cardElement.classList.remove('is-flipped');
+
+        // Texte setzen
+        frontText.innerText = cards[currentIndex].front;
+        backText.innerText = cards[currentIndex].back;
+
+        // Schriftgröße dynamisch anpassen
+        adjustFontSize(frontText);
+        adjustFontSize(backText);
+
+        // Fortschritt
+        progress.innerText = `${currentIndex + 1} / ${cards.length}`;
+    }
+
+    function adjustFontSize(element) {
+        const length = element.innerText.length;
+        if (length > 50) {
+            element.style.fontSize = "1.1rem";
+        } else if (length > 25) {
+            element.style.fontSize = "1.4rem";
+        } else {
+            element.style.fontSize = "1.8rem";
+        }
+    }
+
+    // Navigation
+    function nextCard() {
+        if (currentIndex < cards.length - 1) {
+            currentIndex++;
+            updateCard();
+        }
+    }
+
+    function prevCard() {
+        if (currentIndex > 0) {
+            currentIndex--;
+            updateCard();
+        }
+    }
+
+    function flipCard() {
+        document.getElementById('cardElement').classList.toggle('is-flipped');
+    }
+
+    function shuffleCards() {
+        for (let i = cards.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [cards[i], cards[j]] = [cards[j], cards[i]];
+        }
+        currentIndex = 0;
+        updateCard();
+    }
+
+    function goHome() {
+        currentIndex = 0;
+        updateCard();
+    }
+
+    // Event Listener
+    document.getElementById('cardTrigger').addEventListener('click', flipCard);
+    document.getElementById('nextBtn').addEventListener('click', nextCard);
+    document.getElementById('prevBtn').addEventListener('click', prevCard);
+    document.getElementById('shuffleBtn').addEventListener('click', shuffleCards);
+    document.getElementById('homeBtn').addEventListener('click', goHome);
+
+    // Tastatursteuerung
+    document.addEventListener('keydown', (e) => {
+        switch(e.key) {
+            case 'ArrowRight': nextCard(); break;
+            case 'ArrowLeft': prevCard(); break;
+            case ' ': // Leertaste
+            case 'Enter': 
+                e.preventDefault(); // Verhindert Scrollen bei Leertaste
+                flipCard(); 
+                break;
+            case 'Home': goHome(); break;
+        }
+    });
+
+    // Start
+    parseData();
+    updateCard();
+
+</script>
+
+</body>
+</html>
