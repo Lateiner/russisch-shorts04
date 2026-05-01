@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video-Quiz: Den Moment abpassen</title>
+    <style>
+        :root {
+            --bg-color: #1a1a1a;
+            --text-color: #ffffff;
+            --accent-color: #ff4757;
+            --success-color: #2ed573;
+            --ui-bg: #2f3542;
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: #121212;
+            color: var(--text-color);
+            margin: 0;
+            padding: 10px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 700px;
+            background: var(--ui-bg);
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            text-align: center;
+        }
+
+        /* Video-Simulation */
+        .video-box {
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            background: #000;
+            border-radius: 10px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            border: 2px solid #444;
+        }
+
+        .subtitle {
+            position: absolute;
+            bottom: 20px;
+            width: 90%;
+            font-size: 1.4rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+            min-height: 2em;
+        }
+
+        .progress-container {
+            width: 100%;
+            height: 5px;
+            background: #555;
+            position: absolute;
+            bottom: 0;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: var(--accent-color);
+            width: 0%;
+        }
+
+        .controls {
+            margin-top: 25px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .btn-action {
+            padding: 20px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            border: none;
+            border-radius: 50px;
+            background: var(--accent-color);
+            color: white;
+            cursor: pointer;
+            transition: transform 0.1s, background 0.3s;
+        }
+
+        .btn-action:active { transform: scale(0.95); }
+        .btn-action:disabled { background: #57606f; cursor: not-allowed; }
+
+        .feedback {
+            font-weight: bold;
+            min-height: 1.5em;
+            margin-top: 10px;
+        }
+
+        .hint { color: #a4b0be; font-size: 0.9rem; margin-top: 5px; }
+
+        @media (max-width: 480px) {
+            .subtitle { font-size: 1.1rem; }
+            .btn-action { font-size: 1.2rem; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Reaktions-Check: „Всё“ vorhersagen</h2>
+    <p class="hint">Ein Streit eskaliert. Drücke den Button genau dann, wenn du glaubst, dass die Person den Streit mit „Всё!“ abbricht.</p>
+
+    <div class="video-box" id="videoBox">
+        <div id="visual-cue" style="font-size: 3rem; margin-bottom: 10px;">🎭</div>
+        <div class="subtitle" id="subtitle-text">Drücke Start...</div>
+        <div class="progress-container">
+            <div class="progress-bar" id="progressBar"></div>
+        </div>
+    </div>
+
+    <div class="controls">
+        <button class="btn-action" id="mainBtn" onclick="handleMainAction()">Start Video</button>
+        <div class="feedback" id="feedback"></div>
+    </div>
+</div>
+
+<script>
+    const script = [
+        { time: 0, text: "— Ты опять не помыл посуду!" },
+        { time: 2000, text: "— Я был очень занят на работе." },
+        { time: 4000, text: "— Это всегда одна и та же отговорка!" },
+        { time: 6000, text: "— Слушай, я не хочу начинать этот разговор..." },
+        { time: 8000, text: "— Но мы должны это решить прямо сейчас!" },
+        { time: 10000, text: "— ..." }, // Die entscheidende Pause
+        { time: 11000, text: "— Всё! Я ухожу в другую комнату.", isTarget: true },
+        { time: 14000, text: "[Ende der Szene]" }
+    ];
+
+    let isPlaying = false;
+    let startTime;
+    let timer;
+    let hasGuessed = false;
+
+    function handleMainAction() {
+        if (!isPlaying) {
+            startVideo();
+        } else {
+            checkMoment();
+        }
+    }
+
+    function startVideo() {
+        isPlaying = true;
+        hasGuessed = false;
+        startTime = Date.now();
+        document.getElementById('mainBtn').innerText = "JETZT!";
+        document.getElementById('feedback').innerText = "";
+        document.getElementById('feedback').style.color = "white";
+        
+        runVideoLoop();
+    }
+
+    function runVideoLoop() {
+        const elapsed = Date.now() - startTime;
+        const progressBar = document.getElementById('progressBar');
+        const subtitle = document.getElementById('subtitle-text');
+        
+        // Progress Bar
+        const totalDuration = 14000;
+        const progress = (elapsed / totalDuration) * 100;
+        progressBar.style.width = Math.min(progress, 100) + "%";
+
+        // Untertitel finden
+        const currentLine = [...script].reverse().find(line => line.time <= elapsed);
+        if (currentLine) {
+            subtitle.innerText = currentLine.text;
+        }
+
+        if (elapsed < totalDuration) {
+            timer = requestAnimationFrame(runVideoLoop);
+        } else {
+            endGame();
+        }
+    }
+
+    function checkMoment() {
+        const elapsed = Date.now() - startTime;
+        const feedback = document.getElementById('feedback');
+        
+        if (hasGuessed) return;
+        hasGuessed = true;
+
+        // Das Ziel-Fenster liegt zwischen 9500ms und 11500ms
+        if (elapsed >= 9500 && elapsed <= 11500) {
+            feedback.innerText = "PERFEKT! Genau da fällt das Wort.";
+            feedback.style.color = "var(--success-color)";
+        } else if (elapsed < 9500) {
+            feedback.innerText = "Zu früh! Die Spannung war noch nicht hoch genug.";
+            feedback.style.color = "var(--accent-color)";
+        } else {
+            feedback.innerText = "Zu spät! Das Wort ist bereits gefallen.";
+            feedback.style.color = "var(--accent-color)";
+        }
+    }
+
+    function endGame() {
+        isPlaying = false;
+        cancelAnimationFrame(timer);
+        document.getElementById('mainBtn').innerText = "Video Neustarten";
+        if (!hasGuessed) {
+            document.getElementById('feedback').innerText = "Du hast den Moment verpasst.";
+        }
+    }
+</script>
+
+</body>
+</html>
